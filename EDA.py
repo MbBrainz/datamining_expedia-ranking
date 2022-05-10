@@ -47,6 +47,36 @@ user_country_df = user_country_df[["prop_country_id", "visitor_location_country_
 
 user_country_pivot_df = user_country_df.reset_index([0,1]).pivot("prop_country_id", "visitor_location_country_id", "count")
 # %%
-sns.scatterplot(data=user_country_df, x="prop_country_id", y="visitor_location_country_id")
+
+x = "prop_country_id"
+y = "visitor_location_country_id"
+sns.scatterplot(data=user_country_df, x=x, y=y)
+# sns.histplot(data=user_country_df,x=x, y=y, bins=50, pthresh=.1, cmap="mako")
+sns.kdeplot(data=user_country_df, x=x, y=y, levels=5, color="b", linewidths=4)
+# %%
+# See how many booked places have a significant difference int the price they're booked for compared to what price they show.
+# 
+# if the gross booking value is not significantly different then price*staylength,
+# then the gross_booking price can be
+# estimated as that and then the gross_usd_booking doesnt add information
+# This may allow us to eliminate the gross_booking_usd 
+
+
+# find correlation between booking float and usd  value
+booked_data = train_df[(train_df["booking_bool"] == True) & (train_df["price_usd"] > 1)]
+#%%
+
+booked_data["rel_usd_diff_per_night"] = (booked_data["gross_bookings_usd"] / booked_data["srch_length_of_stay"] - booked_data["price_usd"]) / booked_data["price_usd"]
+booked_data["usd_diff"] = booked_data["gross_bookings_usd"] - booked_data["price_usd"]
+
+booked_price_data = booked_data[["srch_length_of_stay" ,"gross_bookings_usd", "price_usd", "usd_diff", "rel_usd_diff_per_night"]]
+
+#%%
+# sns.histplot(booked_data, x="price_usd", )
+sns.displot(booked_data, x="price_usd", )
+
+# %%
+# booked_price_data.sort_values(by="rel_usd_diff_per_night", axis='columns')
+booked_price_data.sort_values("rel_usd_diff_per_night", ascending=False)
 
 # %%
