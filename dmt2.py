@@ -2,7 +2,9 @@
 from cmath import log
 from distutils.log import info
 from email.utils import collapse_rfc2231_value
+from operator import index
 from pickle import FALSE
+from tkinter import commondialog
 import pandas as pd 
 import seaborn as sns 
 import numpy as np 
@@ -11,47 +13,23 @@ from sklearn.feature_selection import RFE
 from sympy import comp
 from torch import isin
 
-from utils import drop_features_with_many_na, get_features_from_datetime 
-
-# %%
-train_df = pd.read_csv("./data/training_set_VU_DM.csv")
-test_df = pd.read_csv("./data/test_set_VU_DM.csv")
-
+from utils import drop_features_with_many_na, get_features_from_datetime #%%
 #%%
-train_df[train_df["srch_id"] < 500].to_csv("./data/small_test_set_VU_DM.csv")
-
-raw_df = pd.DataFrame(pd.concat([train_df, test_df]))
-# %%
-raw_df.head()
-raw_df.info()
-# %%
-display(raw_df.isnull().sum())
-df = drop_features_with_many_na(raw_df, 4E6)
-df.head()
-print(df.columns)
-
-#%%
-train_df = get_features_from_datetime(train_df)
-  
-#%%
-# going to be investigating the COMP_ data and see what we can do with it
-
-compdf = train_df.iloc[:,26:50]
-compdf.head()
-#%%
-#Determining the humber of Null values 
+#loadinmg the smaller set to test with 
 
 competitordf = pd.read_csv("./data/small_test_set_VU_DM.csv")
 #%%
+#categorizing the data to only the COMP_ features 
 competitordf.head()
 compdf = competitordf.iloc[:,28:52]
 
 compdf.head()
 #%%
-
+#Determining the humber of Null values 
 null_vals = compdf.isnull().sum()
 
 null_vals.tolist()
+null_vals
 
 #%%
 cols = compdf.columns.tolist()
@@ -59,64 +37,114 @@ cols
 #%%
 plt.style.use("seaborn")
 plt.plot(cols, null_vals)
+plt.title("number of NaN values present for features", fontsize = 16)
+plt.xlabel("Feature variable", fontsize = 14)
+plt.ylabel("Number of NaN values oresent in dataset", fontsize = 14)
 plt.xticks(rotation=90)
 #%%
-compdf
-
-
+#from the above plot we can see that comp_inv columns have the most data whilst
+#the comp_percentage_diff has the most NaN values
+#+1 if competitor 1 does not have availability in the hotel; 0 if both Expedia and 
+# competitor 1 have availability; null signifies there is no competitive data
+compdf.describe()
 #%%
+#identifying outliers and extreme values which may influence training and model accuracy 
+
 ax = sns.boxplot(data=compdf, showfliers = True )
 sns.despine(offset=10, trim=True)
 labels = ax.get_xticklabels()
 plt.setp(labels, rotation=85)
+plt.xlabel("Feature variable", fontsize = 14)
+plt.ylabel("Variable values in dataset", fontsize = 14)
+plt.title("Graphic representation of feature values per column", fontsize = 14)
 plt.tight_layout()
 #%%
 ax = sns.boxplot(data=compdf, showfliers = False )
 sns.despine(offset=10, trim=True)
 labels = ax.get_xticklabels()
 plt.setp(labels, rotation=85)
+plt.xlabel("Feature variable", fontsize = 14)
+plt.ylabel("Spread values in dataset", fontsize = 14)
+plt.title("Boxplot of feature variables", fontsize = 14)
 plt.tight_layout()
 #%%
-
 ax = sns.boxenplot(data=compdf)
 sns.despine(offset=10, trim=True)
 labels = ax.get_xticklabels()
 plt.setp(labels, rotation=85)
 plt.tight_layout()
 #%%
+#Before elimination we will look at possible correlations 
+#looking at correlations greater than 0.8
+corr = compdf.corr()
+kot = corr[corr>=.8]
+plt.figure(figsize=(12,8))
+sns.heatmap(kot)
+#%%
+#Looking at the number of negative values in the dataset
+#by definition only comp_rate can be negative
+#investigating the neg values
+compdf.lt(0).sum()
+#%%
+#looking only at the DF excluding the comp{}_rate features
+to_el = []
+for i in range(1,9,1):
+    to_el.append("comp{}_rate".format(i))
 
-ax = sns.catplot(data=compdf)
-sns.despine(offset=10, trim=True)
-labels = ax.get_xticklabels()
-plt.setp(labels, rotation=85)
-plt.tight_layout()
+negative_vals = compdf.copy()
+for i in to_el:
 
+  negative_vals.drop(i, axis=1, inplace=True)
+
+negative_vals.lt(0).sum()
+#%%
+#firstly will drop the columns which have negative values
+#no real way to justify changing the numbers or keeping them 
+#can only be 1 or 0 
+negative_vals
+#%%
+#iterating over each column and identifying which row has these negative values
+
+rows_to_delete = []
+for (colname,colval) in negative_vals.iteritems():
+    for  i in range(0,6973,1):
+      if negative_vals.at[i, colname] < 0:
+        print("A negative value was found in column #{} and column {}".format(i, colname))   
+        print("removing this row from the dataset")
+        rows_to_delete.append(i)
+
+#%%
+#removing duplicates from the list 
+res_to_remove = []
+[res_to_remove.append(x) for x in rows_to_delete if x not in res_to_remove]
+res_to_remove
+
+#%%
+#removing these rows from the dataset
+new_df = negative_vals.copy()
+
+for i in res_to_remove:
+  new_df.drop([i], axis = 0, inplace=True)
+
+new_df
 #%%
 #finding the maximum values and potential outliers
 #Columns for percent_diff need to be removed 
 
+cols_replace = []
+for i in range(1,9,1):
+    cols_replace.append("comp{}_rate_percent_diff".format(i))
 
-col1 = "comp1_rate_percent_diff"
-col2 = "comp2_rate_percent_diff"
-col3 = "comp3_rate_percent_diff"
-col4 = "comp4_rate_percent_diff"
-col5 = "comp5_rate_percent_diff"
-col6 = "comp6_rate_percent_diff"
-col7 = "comp7_rate_percent_diff"
-col8 = "comp8_rate_percent_diff"
-
-#%%
-cols_replace = [col1, col2, col3, col4, col5, col6, col7, col8]
 cols_replace
 #%%
 #finding the maximum values of the potential outliers
 #Columns for huge variations will be replaced by the median value 
-maxlist = compdf.max()
+maxlist = new_df.max()
 maxlist["comp1_rate_percent_diff"]
 #%%
 
 #finding the location of the outliers and investigating them further
-max_vals_location = compdf.idxmax(axis = 0)
+max_vals_location = new_df.idxmax(axis = 0)
 max_vals_location["comp1_rate_percent_diff"]
 
 #%%
@@ -124,17 +152,14 @@ info = pd.DataFrame(data = compdf.describe())
 info
 
 #%%
-info.loc["25%",col1]
-
-#%%
 #creating copies for the various scenarios 
-
 compdf_lower_q = compdf.copy()
 compdf_lower_q
 
 #%%
 #Filling all NaN values with the first quartile 
 #seeing how it affects the plots and the data 
+#This was done by the previoud group who won.
 for column in compdf_lower_q:
     compdf_lower_q[column] = compdf_lower_q[column].fillna(info.loc["25%",column])
     
@@ -154,11 +179,9 @@ sns.despine(offset=10, trim=True)
 labels = ax.get_xticklabels()
 plt.setp(labels, rotation=85)
 plt.tight_layout()
-
-
-
 #%%
-#The second option would be to lower the extreme values and replace these with the upper quartile
+#Another option would be to mitigate the extreme values
+#only concerned with the closest 5 competitiors - therefore concentrate on closer percent diff rates
 #finding the maximum values of the potential outliers
 #Columns for huge variations will be replaced by the median value 
 maxlist =  compdf_lower_q.max()
@@ -177,10 +200,9 @@ compdf_lower_q1 = compdf_lower_q.copy()
 compdf_lower_q1.describe()
 
 #%%
-
+#Just doing something generic, will confirm with you guys how we want to handle these values
+#can either completely remove them or adjust them
 for column in  compdf_lower_q1:
-    # print(column)
-    # print(compdf_lower_q1.at[max_vals_location[column],column])
     if compdf_lower_q1.at[max_vals_location[column],column] > 600:
       print("The column is = {} and the value is {}".format(column,compdf_lower_q1.at[max_vals_location[column],column]))
       print(compdf_lower_q1.loc[max_vals_location[column],column]/3)
@@ -196,8 +218,8 @@ plt.setp(labels, rotation=85)
 plt.tight_layout()
 
 #%%
+#can also take the log value of the columns to see how it influences spread
 #now to test the log of the larger columns
-
 logcol1 = "log_comp1_rate_percent_diff"
 logcol2 = "log_comp2_rate_percent_diff"
 logcol3 = "log_comp3_rate_percent_diff"
@@ -214,10 +236,8 @@ log_compdf = compdf_lower_q1.copy()
 log_compdf[logcols] = np.log(compdf_lower_q1[cols_replace]+1)
 
 #%%
-
 log_compdf
 #%%
-
 for i in cols_replace:
   print(i)
   log_compdf.drop([i], inplace = True,  axis = 1)
@@ -250,12 +270,6 @@ for column in compdf:
       # compdf_lower_q.at[column] = np.log(compdf_lower_q[column] +1 )
 
 
-# ax = sns.boxplot(data=compdf_lower_q, showfliers = False )
-# sns.despine(offset=10, trim=True)
-# labels = ax.get_xticklabels()
-# plt.setp(labels, rotation=85)
-# plt.tight_layout()
-
 #%%
 compdf_lower_q
 
@@ -266,97 +280,4 @@ sns.despine(offset=10, trim=True)
 labels = ax.get_xticklabels()
 plt.setp(labels, rotation=85)
 plt.tight_layout()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #--------------------------------------------------------------------------------
-
-
-
-
-
-
-#%%
-#%%
-corr_df = df.drop(columns=["srch_id"])
-corr_df.columns = [str(x).replace("_", " ").title() for x in corr_df.columns]
-corr = corr_df.corr()
-#%%
-#%%
-plt.figure(figsize=(16,6))
-mask = np.triu(np.ones_like(corr))
-heatmap = sns.heatmap(corr.round(3),cmap="BrBG", annot=True, mask=mask)
-# plt.savefig("figures/correlation_hm_plot.pdf", bbox_inches="tight")
-#%%
-non_numericals = [x for x in df.columns if ( x.endswith("bool") | x.endswith("id"))]
-# non_numericals = non_numericals + ["src_id",]
-# %%
-pair_df = df.drop(columns=non_numericals).drop(columns=drop_columns, errors='ignore')
-# %%
-# sns.pairplot(pair_df, hue="prop_starrating")
-pair_df.columns
-# %%
-user_country_df = raw_df
-user_country_df["count"] = 1
-user_country_df = user_country_df[["prop_country_id", "visitor_location_country_id", "count"]].groupby(by=["prop_country_id", "visitor_location_country_id"]).count()
-
-user_country_pivot_df = user_country_df.reset_index([0,1]).pivot("prop_country_id", "visitor_location_country_id", "count")
-# %%
-
-x = "prop_country_id"
-y = "visitor_location_country_id"
-sns.scatterplot(data=user_country_df, x=x, y=y)
-# sns.histplot(data=user_country_df,x=x, y=y, bins=50, pthresh=.1, cmap="mako")
-sns.kdeplot(data=user_country_df, x=x, y=y, levels=5, color="b", linewidths=4)
-# %%
-# See how many booked places have a significant difference in the price they're booked for compared to what price they show.
-# 
-# if the gross booking value is not significantly different then price*staylength,
-# then the gross_booking price can be
-# estimated as that and then the gross_usd_booking doesnt add information
-# This may allow us to eliminate the gross_booking_usd 
-
-
-# find correlation between booking float and usd  value
-booked_data = train_df[(train_df["booking_bool"] == True) & (train_df["price_usd"] > 1) & (train_df["price_usd"] < 1E7)]
-#%%
-
-booked_data["rel_usd_diff_per_night"] = (booked_data["gross_bookings_usd"] / booked_data["srch_length_of_stay"] - booked_data["price_usd"]) / booked_data["price_usd"]
-booked_data["usd_diff"] = booked_data["gross_bookings_usd"] - booked_data["price_usd"]
-# booked_data["person_count"]
-
-booked_price_data = booked_data[['srch_adults_count', 'srch_children_count',"srch_length_of_stay" ,"gross_bookings_usd", "price_usd", "usd_diff", "rel_usd_diff_per_night"]]
-
-#%%
-# sns.histplot(booked_data, x="price_usd", )
-# sns.displot(booked_data, x="price_usd", )
-
-# %%
-# booked_price_data.sort_values(by="rel_usd_diff_per_night", axis='columns')
-sorted_rel_usd_df = booked_price_data.sort_values("rel_usd_diff_per_night", ascending=False)
-
-# %%
-import tqdm
-
-dis_df = df.drop(columns=non_numericals +["date_time"])
-# fig, axes = plt.subplots(nrows=len(dis_df.columns), figsize=(30,15))
-for col in tqdm.tqdm( dis_df.columns):
-  sns.displot(dis_df[(dis_df["price_usd"] > 1) & (dis_df["price_usd"] < 1E7)][col], bins=20, kde=True)
-  plt.tight_layout() 
-  plt.show()
-# plt.show()
-# %%
-sns.displot()
