@@ -62,6 +62,32 @@ def get_features_from_datetime(df: DataFrame) -> DataFrame:
 def Comp_inv_and_Cheaper_count(df1):
 
   df = df1.copy() 
+  
+  perc_diff_cols = []
+  for i in range(1,9,1):
+    perc_diff_cols.append("comp{}_rate_percent_diff".format(i))
+
+  comp_rate = []
+
+  for i in range(1,9,1):
+        comp_rate.append("comp{}_rate".format(i))
+
+  total = []
+  for i, row in df.iterrows():
+    counter = []
+    for j in comp_rate:
+      if df.at[i, j] == -1:
+        for k in perc_diff_cols:
+          if df.at[i, k] < 150:
+            counter.append(1)
+
+    total.append(np.sum(counter))
+
+  df["Comp_cheaper_and_in_150percent"] = total
+
+  for i in perc_diff_cols:
+    df.drop(i, axis = 1, inplace = True)
+
   comp_inv = []
   for i in range(1,9,1):
       comp_inv.append("comp{}_inv".format(i))
@@ -81,11 +107,7 @@ def Comp_inv_and_Cheaper_count(df1):
 
   for i in comp_inv:
     df.drop(i, axis = 1, inplace = True)
-
-  comp_rate = []
-  for i in range(1,9,1):
-      comp_rate.append("comp{}_rate".format(i))
-    
+   
   comp_ratedf =  df[comp_rate]
   row_count_rate = []
   
