@@ -23,9 +23,9 @@ print(train_df.columns)
 
 
 train_df = add_scores(train_df)
-train_df.head()
-# %%
-train_df = get_features_from_datetime(train_df)
+train_df.drop(columns=["position"], inplace=True)
+features = train_df.columns.to_list()
+features.remove("scores")
 train_df.head()
 
 #%%
@@ -36,14 +36,10 @@ raw_test_df = pd.read_csv("./data/test_set_VU_DM.csv")
 #%%
 test_df = get_features_from_datetime(raw_test_df)
 
-features = ['srch_id', 'site_id', 'visitor_location_country_id', 'prop_country_id',
-       'prop_id', 'prop_starrating', 'prop_review_score', 'prop_brand_bool',
-       'prop_location_score1', 'prop_log_historical_price', 'position',
-       'price_usd', 'promotion_flag', 'srch_destination_id',
-       'srch_length_of_stay', 'srch_booking_window', 'srch_adults_count',
-       'srch_children_count', 'srch_room_count', 'srch_saturday_night_bool',
-       'random_bool', 'month', 'day', 'hour']
-
+#%%
 test_df = test_df[features]
 test_df.to_csv("./data/processed_test_set_VU_DM.csv")
+test_df.head()
 # %%
+
+
