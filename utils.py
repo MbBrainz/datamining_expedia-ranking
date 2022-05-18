@@ -1,4 +1,5 @@
 from pandas import DataFrame, to_datetime
+from sklearn.model_selection import GroupShuffleSplit
 
 
 def drop_features_with_many_na(df: DataFrame, threshold=2E6):
@@ -139,3 +140,24 @@ def discountedCumulativeGain(result):
         score = numerator/denominator
         dcg.append(score)
     return sum(dcg)
+
+
+def split_train_data(train_df: DataFrame, testsize=0):
+    gss = GroupShuffleSplit(test_size=testsize, n_splits=1, random_state = 7).split(train_df, groups=train_df['srch_id'])
+
+    X_train_inds, X_test_inds = next(gss)
+
+    train_data=  train_df.iloc[X_train_inds]
+    X_train = train_data.loc[:, ~train_data.columns.isin(['scores'])]
+    y_train = train_data.loc[:, train_data.columns.isin(['scores'])]
+
+    groups_train = train_data.groupby('srch_id').size().to_frame('size')['size'].to_numpy()
+
+    test_data= train_df.iloc[X_test_inds]
+
+#We need to keep the id for later predictions
+    X_test = test_data.loc[:, ~test_data.columns.isin(["scores"])]
+    y_test = test_data.loc[:, test_data.columns.isin(['scores'])]
+
+    groups_val = test_data.groupby('scores').size().to_frame('size')['size'].to_numpy()
+    return X_train, y_train, X_test, y_test ,groups_train, groups_val,test_data
