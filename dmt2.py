@@ -13,17 +13,25 @@ from sklearn.feature_selection import RFE
 from sympy import comp
 from torch import isin
 
-from utils import drop_features_with_many_na, get_features_from_datetime 
+from utils import drop_features_with_many_na, get_features_from_datetime, Comp_inv_and_Cheaper_count 
 #%%
 #loadinmg the smaller set to test with 
 
 competitordf = pd.read_csv("./data/small_test_set_VU_DM.csv")
+
 #%%
 #categorizing the data to only the COMP_ features 
 competitordf.head()
 compdf = competitordf.iloc[:,28:52]
 
 compdf.head()
+
+#%%
+
+newdf =  Comp_inv_and_Cheaper_count(competitordf)
+
+#%%
+newdf
 #%%
 #Determining the humber of Null values 
 null_vals = compdf.isnull().sum()
@@ -34,13 +42,6 @@ null_vals
 #%%
 cols = compdf.columns.tolist()
 cols
-#%%
-plt.style.use("seaborn")
-plt.plot(cols, null_vals)
-plt.title("number of NaN values present for features", fontsize = 16)
-plt.xlabel("Feature variable", fontsize = 14)
-plt.ylabel("Number of NaN values oresent in dataset", fontsize = 14)
-plt.xticks(rotation=85)
 
 #%%
 null_vals1 = pd.DataFrame(compdf.isnull().sum()).reset_index()
@@ -81,117 +82,69 @@ print("new Section regarding aggregation")
 #%%
 #creating the names to isolate comp_inv
 
-def Comp_inv_and_Cheaper_count(df1):
+# def Comp_inv_and_Cheaper_count(df1):
 
-  df = df1.copy() 
-  comp_inv = []
-  for i in range(1,9,1):
-      comp_inv.append("comp{}_inv".format(i))
+#   df = df1.copy() 
+  
+#   perc_diff_cols = []
+#   for i in range(1,9,1):
+#     perc_diff_cols.append("comp{}_rate_percent_diff".format(i))
+
+#   total = []
+#   for i, row in df.iterrows():
+#     counter = []
+#     for j in comp_rate:
+#       if df.at[i, j] == -1:
+#         for k in perc_diff_cols:
+#           if df.at[i, k] < 150:
+#             counter.append(1)
+
+#     total.append(np.sum(counter))
+
+#   df["Comp_cheaper_and_in 150percent"] = total
+
+#   for i in perc_diff_cols:
+#     df.drop(i, axis = 1, inplace = True)
+
+#   comp_inv = []
+#   for i in range(1,9,1):
+#       comp_inv.append("comp{}_inv".format(i))
     
-  comp_invdf =  df[comp_inv]
-  row_count_inv = []
+#   comp_invdf =  df[comp_inv]
+#   row_count_inv = []
   
-  for i, row in comp_invdf.iterrows():
-    row_vals = row.tolist()
-    row_total = []
-    for i in row_vals:
-      if i == 0:
-        row_total.append(1)
-    row_count_inv.append(np.sum(row_total))
+#   for i, row in comp_invdf.iterrows():
+#     row_vals = row.tolist()
+#     row_total = []
+#     for i in row_vals:
+#       if i == 0:
+#         row_total.append(1)
+#     row_count_inv.append(np.sum(row_total))
 
-  df["Competitor_Available_count"] = row_count_inv
+#   df["Competitor_Available_count"] = row_count_inv
 
-  for i in comp_inv:
-    df.drop(i, axis = 1, inplace = True)
-
-  comp_rate = []
-  for i in range(1,9,1):
-      comp_rate.append("comp{}_rate".format(i))
-    
-  comp_ratedf =  df[comp_rate]
-  row_count_rate = []
+#   for i in comp_inv:
+#     df.drop(i, axis = 1, inplace = True)
+   
+#   comp_ratedf =  df[comp_rate]
+#   row_count_rate = []
   
-  for i, row in comp_ratedf.iterrows():
-    row_value = row.tolist()
-    row_total = []
-    for i in row_value:
-      if i == -1:
-        row_total.append(1)
-    row_count_rate.append(np.sum(row_total))
+#   for i, row in comp_ratedf.iterrows():
+#     row_value = row.tolist()
+#     row_total = []
+#     for i in row_value:
+#       if i == -1:
+#         row_total.append(1)
+#     row_count_rate.append(np.sum(row_total))
 
-  df["Competitor_Cheaper_count"] = row_count_rate
+#   df["Competitor_Cheaper_count"] = row_count_rate
 
-  for i in comp_rate:
-    df.drop(i, axis = 1, inplace = True)
+#   for i in comp_rate:
+#     df.drop(i, axis = 1, inplace = True)
 
-  return df
-
-#%%
-test =  Comp_inv_and_Cheaper_count(compdf)
-#%%
-test
+#   return df
 
 #%%
-def Comp_rate_count(df2):
-
-  df = df2.copy()
-  comp_rate = []
-  for i in range(1,9,1):
-      comp_rate.append("comp{}_rate".format(i))
-    
-  comp_ratedf =  df[comp_rate]
-  row_count_rate = []
-  
-  for i, row in comp_ratedf.iterrows():
-    row_value = row.tolist()
-    row_total = []
-    for i in row_value:
-      if i == -1:
-        row_total.append(1)
-    row_count_rate.append(np.sum(row_total))
-
-  df["Competitor_Available_count"] = row_count_rate
-
-  for i in comp_rate:
-    df.drop(i, axis = 1, inplace = True)
-
-  return df
-
-#%%
-test1 = Comp_rate_count(compdf)
-test2 = Comp_inv_count(test1)
-#%%
-test2
-
-#%%
-#adding the count column to the dataset
-comp_invdf["Competitor_Available_count"] = row_count_inv
-comp_invdf
-#%%
-#We will now investigate the is cheaper count
-comp_rate = []
-for i in range(1,9,1):
-    comp_rate.append("comp{}_rate".format(i))
-  
-compratedf = compdf[comp_rate]
-
-row_count_rate =[]
-
-for i, row in compratedf.iterrows():
-  row_values = row.tolist()
-  row_total_rate = []
-  for i in row_values:
-    if i == -1:
-      row_total_rate.append(1)
-  row_count_rate.append(np.sum(row_total_rate))
-      
-row_count_rate
-#%%
-compratedf["Competitor_Cheaper_count"] = row_count_rate
-compratedf
-#%%
-
-
 #identifying outliers and extreme values which may influence training and model accuracy 
 
 ax = sns.boxplot(data=compdf, showfliers = True )
