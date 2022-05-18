@@ -13,7 +13,7 @@ from sklearn.feature_selection import RFE
 from sympy import comp
 from torch import isin
 
-from utils import drop_features_with_many_na, get_features_from_datetime #%%
+from utils import drop_features_with_many_na, get_features_from_datetime 
 #%%
 #loadinmg the smaller set to test with 
 
@@ -40,14 +40,158 @@ plt.plot(cols, null_vals)
 plt.title("number of NaN values present for features", fontsize = 16)
 plt.xlabel("Feature variable", fontsize = 14)
 plt.ylabel("Number of NaN values oresent in dataset", fontsize = 14)
-plt.xticks(rotation=90)
+plt.xticks(rotation=85)
+
+#%%
+null_vals1 = pd.DataFrame(compdf.isnull().sum()).reset_index()
+null_vals1["values"] = null_vals1[0]
+null_vals1.drop( columns = 0, inplace= True)
+sns.barplot(data = null_vals1, x = "index", y = "values")
+sns.despine(offset=10, trim=True)
+plt.title("number of NaN values present for features", fontsize = 16)
+plt.xlabel("Feature", fontsize = 14)
+plt.ylabel("Number of NaN values oresent in dataset", fontsize = 14)
+plt.xticks(rotation=85)
+
+#%%
+#plotting as a percentage
+null_vals1["Percentage"] = null_vals1["values"]/6973
+null_sorted = null_vals1.sort_values('Percentage')
+
+#%%
+sns.barplot(data = null_sorted, x = "Percentage", y = "index", palette=("Blues_d"))
+sns.despine(offset=10, trim=True)
+plt.title("number of NaN values present for features", fontsize = 16)
+plt.xlabel("Percentage of NaN values to total columns", fontsize = 14)
+plt.ylabel("Feature", fontsize = 14)
+plt.xticks(rotation=85)
+
+
 #%%
 #from the above plot we can see that comp_inv columns have the most data whilst
 #the comp_percentage_diff has the most NaN values
 #+1 if competitor 1 does not have availability in the hotel; 0 if both Expedia and 
 # competitor 1 have availability; null signifies there is no competitive data
 compdf.describe()
+
 #%%
+#----------------------------------------------------------------
+print("new Section regarding aggregation")
+#----------------------------------------------------------------------
+#%%
+#creating the names to isolate comp_inv
+
+def Comp_inv_and_Cheaper_count(df1):
+
+  df = df1.copy() 
+  comp_inv = []
+  for i in range(1,9,1):
+      comp_inv.append("comp{}_inv".format(i))
+    
+  comp_invdf =  df[comp_inv]
+  row_count_inv = []
+  
+  for i, row in comp_invdf.iterrows():
+    row_vals = row.tolist()
+    row_total = []
+    for i in row_vals:
+      if i == 0:
+        row_total.append(1)
+    row_count_inv.append(np.sum(row_total))
+
+  df["Competitor_Available_count"] = row_count_inv
+
+  for i in comp_inv:
+    df.drop(i, axis = 1, inplace = True)
+
+  comp_rate = []
+  for i in range(1,9,1):
+      comp_rate.append("comp{}_rate".format(i))
+    
+  comp_ratedf =  df[comp_rate]
+  row_count_rate = []
+  
+  for i, row in comp_ratedf.iterrows():
+    row_value = row.tolist()
+    row_total = []
+    for i in row_value:
+      if i == -1:
+        row_total.append(1)
+    row_count_rate.append(np.sum(row_total))
+
+  df["Competitor_Cheaper_count"] = row_count_rate
+
+  for i in comp_rate:
+    df.drop(i, axis = 1, inplace = True)
+
+  return df
+
+#%%
+test =  Comp_inv_and_Cheaper_count(compdf)
+#%%
+test
+
+#%%
+def Comp_rate_count(df2):
+
+  df = df2.copy()
+  comp_rate = []
+  for i in range(1,9,1):
+      comp_rate.append("comp{}_rate".format(i))
+    
+  comp_ratedf =  df[comp_rate]
+  row_count_rate = []
+  
+  for i, row in comp_ratedf.iterrows():
+    row_value = row.tolist()
+    row_total = []
+    for i in row_value:
+      if i == -1:
+        row_total.append(1)
+    row_count_rate.append(np.sum(row_total))
+
+  df["Competitor_Available_count"] = row_count_rate
+
+  for i in comp_rate:
+    df.drop(i, axis = 1, inplace = True)
+
+  return df
+
+#%%
+test1 = Comp_rate_count(compdf)
+test2 = Comp_inv_count(test1)
+#%%
+test2
+
+#%%
+#adding the count column to the dataset
+comp_invdf["Competitor_Available_count"] = row_count_inv
+comp_invdf
+#%%
+#We will now investigate the is cheaper count
+comp_rate = []
+for i in range(1,9,1):
+    comp_rate.append("comp{}_rate".format(i))
+  
+compratedf = compdf[comp_rate]
+
+row_count_rate =[]
+
+for i, row in compratedf.iterrows():
+  row_values = row.tolist()
+  row_total_rate = []
+  for i in row_values:
+    if i == -1:
+      row_total_rate.append(1)
+  row_count_rate.append(np.sum(row_total_rate))
+      
+row_count_rate
+#%%
+compratedf["Competitor_Cheaper_count"] = row_count_rate
+compratedf
+#%%
+
+
 #identifying outliers and extreme values which may influence training and model accuracy 
 
 ax = sns.boxplot(data=compdf, showfliers = True )
@@ -109,15 +253,14 @@ rows_to_delete = []
 for (colname,colval) in negative_vals.iteritems():
     for  i in range(0,6973,1):
       if negative_vals.at[i, colname] < 0:
-        print("A negative value was found in column #{} and column {}".format(i, colname))   
-        print("removing this row from the dataset")
+        print("A negative value was found in row #{} and column {}".format(i, colname))
         rows_to_delete.append(i)
-
+print("total rows to potentially remove = {} (with duplicates)".format(len(rows_to_delete)))
 #%%
 #removing duplicates from the list 
 res_to_remove = []
 [res_to_remove.append(x) for x in rows_to_delete if x not in res_to_remove]
-res_to_remove
+print("total number of rows to remove = {}".format(len(res_to_remove)))
 
 #%%
 #removing these rows from the dataset
@@ -281,3 +424,4 @@ labels = ax.get_xticklabels()
 plt.setp(labels, rotation=85)
 plt.tight_layout()
 #--------------------------------------------------------------------------------
+# %%

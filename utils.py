@@ -59,3 +59,48 @@ def get_features_from_datetime(df: DataFrame) -> DataFrame:
     df.drop(columns="date_time", inplace=True)
     
     return df
+
+def Comp_inv_and_Cheaper_count(df1):
+
+  df = df1.copy() 
+  comp_inv = []
+  for i in range(1,9,1):
+      comp_inv.append("comp{}_inv".format(i))
+    
+  comp_invdf =  df[comp_inv]
+  row_count_inv = []
+  
+  for i, row in comp_invdf.iterrows():
+    row_vals = row.tolist()
+    row_total = []
+    for i in row_vals:
+      if i == 0:
+        row_total.append(1)
+    row_count_inv.append(np.sum(row_total))
+
+  df["Competitor_Available_count"] = row_count_inv
+
+  for i in comp_inv:
+    df.drop(i, axis = 1, inplace = True)
+
+  comp_rate = []
+  for i in range(1,9,1):
+      comp_rate.append("comp{}_rate".format(i))
+    
+  comp_ratedf =  df[comp_rate]
+  row_count_rate = []
+  
+  for i, row in comp_ratedf.iterrows():
+    row_value = row.tolist()
+    row_total = []
+    for i in row_value:
+      if i == -1:
+        row_total.append(1)
+    row_count_rate.append(np.sum(row_total))
+
+  df["Competitor_Cheaper_count"] = row_count_rate
+
+  for i in comp_rate:
+    df.drop(i, axis = 1, inplace = True)
+
+  return df
