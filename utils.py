@@ -27,9 +27,9 @@ def add_scores_row(row):
     '''adds SCORES to dataframe'''
     val = 0
     if row["booking_bool"] == 1: 
-        val += 5
-    if row["click_bool"] == 1: 
-        val += 1
+        val = 5
+    elif row["click_bool"] == 1: 
+        val = 1
     return val
 
 def get_features_from_datetime(df: DataFrame) -> DataFrame:
@@ -46,7 +46,7 @@ def get_features_from_datetime(df: DataFrame) -> DataFrame:
         if 'date_time' in df.columns: 
             return df.drop(columns=['date_time'])
         else: 
-            return df
+            return df.copy(deep=True)
 
     df.date_time = to_datetime(df.date_time)
     
@@ -55,10 +55,9 @@ def get_features_from_datetime(df: DataFrame) -> DataFrame:
     df['day']   = df.date_time.dt.day
     df['hour']  = df.date_time.dt.hour
     # df['minute']= df.date_time.dt.minute
+    return df.drop(columns="date_time")
     
-    df.drop(columns="date_time", inplace=True)
-    
-    return df
+
 
 def Comp_inv_and_Cheaper_count(df1):
 
@@ -104,3 +103,17 @@ def Comp_inv_and_Cheaper_count(df1):
     df.drop(i, axis = 1, inplace = True)
 
   return df
+
+import numpy as np 
+"""UNUSED 
+This function will be used to evaluate the scores, but we dont think we use it in the preprocessing
+"""
+def discountedCumulativeGain(result):
+    dcg = []
+    for idx, val in enumerate(result): 
+        numerator = 2**val - 1
+        # add 2 because python 0-index
+        denominator =  np.log2(idx + 2) 
+        score = numerator/denominator
+        dcg.append(score)
+    return sum(dcg)

@@ -56,5 +56,7 @@ https://www.kaggle.com/code/putdejudomthai/expedia-exploratory-data-destination-
 https://medium.com/@zander.b.tedjo/expedia-hotel-recommendations-using-machine-learning-9a8eccd4ecba
 
 
-
-
+# questions 13-05
+how to evaluate scores? 
+- from sklearn.metrics import ndcg_score
+- booking 
