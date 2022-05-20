@@ -1,6 +1,6 @@
 from pandas import DataFrame, to_datetime
 import numpy as np
-
+from tqdm import tqdm
 
 def drop_features_with_many_na(df: DataFrame, threshold=2E6):
     """drop all features with more then `threshold` na values
@@ -14,6 +14,7 @@ def drop_features_with_many_na(df: DataFrame, threshold=2E6):
     """
     na_df = df.isnull().sum()
     na_columns = na_df[na_df.values > threshold].index
+    print(f"Dropping these high-nan colums: {na_columns}")
     return df.drop(columns=na_columns)
 
 
@@ -43,69 +44,29 @@ def get_features_from_datetime(df: DataFrame) -> DataFrame:
     return df.drop(columns="date_time")
 
 
-def Comp_inv_and_Cheaper_count(df1: DataFrame):
-
-  df = df1.copy() 
+def comp_inv_and_cheaper_count(df: DataFrame):
   
-  perc_diff_cols = []
-  for i in range(1,9,1):
-    perc_diff_cols.append("comp{}_rate_percent_diff".format(i))
+  comp_columns = [x for x in df.columns if str(x).startswith("comp")     & str(x).endswith("rate")]
+  comp_diff_columns = [x for x in df.columns if str(x).startswith("comp")& str(x).endswith("rate_percent_diff")]
+  comp_inv_columns = [x for x in df.columns if str(x).startswith("comp") & str(x).endswith("inv")]
 
-  comp_rate = []
-
-  for i in range(1,9,1):
-        comp_rate.append("comp{}_rate".format(i))
-
-  total = []
-  for i, row in df.iterrows():
-    counter = []
-    for j in comp_rate:
-      if df.at[i, j] == -1:
-        for k in perc_diff_cols:
-          if df.at[i, k] < 150:
-            counter.append(1)
-
-    total.append(np.sum(counter))
-
-  df["Comp_cheaper_and_in_150percent"] = total
-
-  for i in perc_diff_cols:
-    df.drop(i, axis = 1, inplace = True)
-
-  comp_inv = []
-  for i in range(1,9,1):
-      comp_inv.append("comp{}_inv".format(i))
+  # df["Comp_cheaper_and_in_150percent"] = 0
+  df["Competitor_Available_count"] = 0
+  df["Competitor_Cheaper_count"] = 0
+  
+  for i, comp_rate_col in tqdm(enumerate(comp_columns), desc="comp", total=len(comp_columns)):
     
-  comp_invdf =  df[comp_inv]
-  row_count_inv = []
-  
-  for i, row in comp_invdf.iterrows():
-    row_vals = row.tolist()
-    row_total = []
-    for i in row_vals:
-      if i == 0:
-        row_total.append(1)
-    row_count_inv.append(np.sum(row_total))
-
-  df["Competitor_Available_count"] = row_count_inv
-
-  for i in comp_inv:
-    df.drop(i, axis = 1, inplace = True)
-   
-  comp_ratedf =  df[comp_rate]
-  row_count_rate = []
-  
-  for i, row in comp_ratedf.iterrows():
-    row_value = row.tolist()
-    row_total = []
-    for i in row_value:
-      if i == -1:
-        row_total.append(1)
-    row_count_rate.append(np.sum(row_total))
-
-  df["Competitor_Cheaper_count"] = row_count_rate
-
-  for i in comp_rate:
-    df.drop(i, axis = 1, inplace = True)
-
-  return df
+    cheaper_mask = (df[comp_rate_col] == -1)
+    percentage_mask = (df[comp_diff_columns[i]] < 150)
+    
+    df.loc[cheaper_mask, "Competitor_Cheaper_count"] += 1
+    
+    # # This feature results in exactly the same column as the  "Competitor_Cheaper_count" feature
+    # cheaper_and_b150_mask = cheaper_mask & percentage_mask
+    # df.loc[cheaper_and_b150_mask, "Comp_cheaper_and_in_150percent"] += 1
+    
+    inv_equal_zero_mask = (df[comp_inv_columns[i]] == 0)
+    df.loc[inv_equal_zero_mask, "Competitor_Available_count"] += 1
+    
+  return df.drop(columns=comp_columns + comp_diff_columns + comp_inv_columns)
+    

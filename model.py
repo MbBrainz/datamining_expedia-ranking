@@ -13,7 +13,7 @@ from utils import split_train_data, user_choose_model_to_load, user_choose_train
 
 
 #%%
-train_df = pd.read_csv("./data/processed_training_set_Vu_DM.csv", index_col=0)
+train_df = pd.read_csv("./data/processed_training_set_Vu_DM-v3.csv", index_col=0)
 
 X_train, y_train, X_val, y_val , groups_train, groups_val, test_data= split_train_data(train_df, testsize=0.2)
 
@@ -25,15 +25,15 @@ if  user_choise == 1:
     print("Training model...")
     # training and defining model
     datenow = datetime.now().strftime("%m-%d-%Y-%H-%M")
-    savedir = "models/xgb_ranker_"+ datenow+ ".json"
-    DEVICE = "cuda" if gpu_is_available() else "cpu"
+    savedir = "models/xgb_rankerv3_"+ datenow+ ".json"
+    DEVICE = 'gpu_hist' if gpu_is_available() else "auto"
     # docs can be found here https://xgboost.readthedocs.io/en/stable/python/python_api.html#xgboost.XGBRanker 
     model = xgb.XGBRanker(  
-        # tree_method='gpu_hist',
+        tree_method=DEVICE,
         booster='gbtree',
         objective='rank:pairwise',
         random_state=42, 
-        learning_rate=0.1,
+        learning_rate=0.03,
         colsample_bytree=0.9, 
         eta=0.05, 
         max_depth=6, 

@@ -41,6 +41,9 @@ def split_train_data(train_df: DataFrame, testsize=0):
 
     groups_val = test_data.groupby('scores').size().to_frame('size')['size'].to_numpy()
     return X_train, y_train, X_test, y_test ,groups_train, groups_val,test_data
+  
+# def split_train_test_data(train_df:DataFrame, testsize=0.2, nsplits=2):
+#     gss = GroupShuffleSplit(test_size=testsize, n_splits=nsplits, random_state = 7).split(train_df, groups=train_df['srch_id'])
 
 
 
