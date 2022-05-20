@@ -17,7 +17,30 @@ from utils import drop_features_with_many_na, get_features_from_datetime, Comp_i
 #%%
 #loadinmg the smaller set to test with 
 
-competitordf = pd.read_csv("./data/small_test_set_VU_DM.csv")
+def Load_csv(Name):
+
+  name_to_load = Name
+  df = pd.read_csv("./data/{}".format(Name))
+  return df
+
+#%%
+competitordf  = Load_csv("small_test_set_VU_DM.csv")
+
+#%%
+competitordf.columns
+#%%
+
+def USD_history_add(df):
+
+  df["visitor_hist_adr_usd"] = df["visitor_hist_adr_usd"].fillna(value = 0)
+  df["hist_USD_diff"] = df["price_usd"] - df["visitor_hist_adr_usd"]
+
+  return df
+
+#%%
+
+newdf = USD_history_add(competitordf)
+newdf
 
 #%%
 #categorizing the data to only the COMP_ features 
