@@ -7,10 +7,10 @@ The model of choise is XGBoost so the data should be in the following format:
 
 """
 #%%
-from inspect import getfile
 import pandas as pd
+from utils import add_scores
+from feature_engineering import drop_features_with_many_na, get_features_from_datetime
 
-from utils import add_scores, drop_features_with_many_na, get_features_from_datetime
 raw_train_df = pd.read_csv("./data/training_set_VU_DM.csv") # this set only contains first 500 srch_id's -> quicker runs for developement
 
 #%%

@@ -9,7 +9,7 @@ from utils import split_train_data
 
 train_df = pd.read_csv("./data/processed_training_set_Vu_DM.csv", index_col=0)
 #%%
-X_train, y_train, X_val, y_val , groups_train, groups_val, test_data= split_train_data(train_df, testsize=0.03)
+X_train, y_train, X_val, y_val , groups_train, groups_val, test_data= split_train_data(train_df, testsize=0.1)
 
 
 # %%

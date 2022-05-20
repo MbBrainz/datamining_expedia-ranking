@@ -45,6 +45,7 @@ if  user_choise == 1:
     model.save_model(savedir)
     
 elif user_choise == 2:
+    print("\n")
     model_dir = user_choose_model_to_load()
     print("loading model...")
     
