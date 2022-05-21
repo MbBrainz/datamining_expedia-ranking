@@ -1,3 +1,4 @@
+from imghdr import tests
 from time import sleep
 from pandas import DataFrame, to_datetime
 from sklearn.model_selection import GroupShuffleSplit
@@ -41,7 +42,6 @@ def split_train_data(train_df: DataFrame, testsize=0):
 
     groups_val = test_data.groupby('scores').size().to_frame('size')['size'].to_numpy()
     return X_train, y_train, X_test, y_test ,groups_train, groups_val,test_data
-<<<<<<< HEAD
 
 def USD_history_diff(df):
 
@@ -49,10 +49,9 @@ def USD_history_diff(df):
   df["hist_USD_diff"] = df["price_usd"] - df["visitor_hist_adr_usd"]
 
   return df
-=======
-  
-# def split_train_test_data(train_df:DataFrame, testsize=0.2, nsplits=2):
-#     gss = GroupShuffleSplit(test_size=testsize, n_splits=nsplits, random_state = 7).split(train_df, groups=train_df['srch_id'])
+
+def split_train_data_nsplits(train_df:DataFrame, testsize=0.2, nsplits=2):
+    gss = GroupShuffleSplit(test_size=testsize, n_splits=nsplits, random_state = 7).split(train_df, groups=train_df['srch_id'])
 
 
 
@@ -97,4 +96,3 @@ def user_choose_model_to_load(models_dir="models/"):
           print("That's not a valid choice!")
           continue
 
->>>>>>> af5850b66eaeab8e531c9e9b553e520b91ed520a
