@@ -2,6 +2,7 @@
 from cmath import log
 from distutils.log import info
 from email.utils import collapse_rfc2231_value
+from itertools import groupby
 from operator import index
 from pickle import FALSE
 from tkinter import commondialog
@@ -41,6 +42,67 @@ def USD_history_add(df):
 
 newdf = USD_history_add(competitordf)
 newdf
+
+#%%
+
+
+
+book_and_propid = ["prop_id", "booking_bool", "click_bool"]
+
+idf = newdf[book_and_propid]
+
+#%%
+
+click_and_book_count = []
+click_but_not_booked = []
+for i, row in idf.iterrows():
+  if idf.at[i, "booking_bool"] == 1 and idf.at[i, "click_bool"] == 1:
+    click_and_book_count.append(1)
+  else:
+    click_and_book_count.append(0)
+  
+  if idf.at[i, "click_bool"] == 1 and idf.at[i, "booking_bool"] == 0:
+    print("clicked but not booked")
+    click_but_not_booked.append(1)
+  else:
+    click_but_not_booked.append(0)
+#%%
+
+newdf["clicked_and_booked"] = click_and_book_count
+
+#%%
+sns.violinplot(data = newdf, x = "prop_id", y = "hist_USD_diff")
+
+
+#%%
+cols = newdf.columns.tolist()
+newcols = []
+for i in cols:
+  if i == "Unnamed: 0":
+    print("skip")
+  else:
+    newcols.append(i)
+
+newdf = newdf[newcols]
+
+for i, row in newdf.iterrows():
+  if newdf.at[i, "hist_USD_diff"] < 0 and newdf.at[i, "clicked_and_booked"] == 1:
+    print("yes this occurs at {}".format(i))
+    print(newdf.at[i, "hist_USD_diff"])
+
+#%%
+
+count = []
+
+for i, row in newdf.iterrows():
+  if newdf.at[i, "hist_USD_diff"] < 0:
+    count.append(1)
+
+np.sum(count)
+#%%
+#%%
+for i, row in idf.iterrows():
+  if idf.at[i, "booking_bool"] == 1 and idf.at[i, "click_bool"] == 1:
 
 #%%
 #categorizing the data to only the COMP_ features 

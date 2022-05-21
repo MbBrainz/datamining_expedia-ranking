@@ -161,3 +161,10 @@ def split_train_data(train_df: DataFrame, testsize=0):
 
     groups_val = test_data.groupby('scores').size().to_frame('size')['size'].to_numpy()
     return X_train, y_train, X_test, y_test ,groups_train, groups_val,test_data
+
+def USD_history_diff(df):
+
+  df["visitor_hist_adr_usd"] = df["visitor_hist_adr_usd"].fillna(value = 0)
+  df["hist_USD_diff"] = df["price_usd"] - df["visitor_hist_adr_usd"]
+
+  return df
