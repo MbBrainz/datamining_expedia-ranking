@@ -10,7 +10,7 @@ def evaluate_score(df: DataFrame):
     ncdg score sorts the given yscores on the predicted values automatically. no manual sorted neccesary! see docs
 
     Args:
-        df (_type_): The input dataframe with columns ["srch_id","prop_id", "scores", "predict"]
+        df (DataFrame): The input dataframe with columns ["srch_id","prop_id", "scores", "predict"]
 
     Returns:
         float: resulting score

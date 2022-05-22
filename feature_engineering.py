@@ -111,7 +111,17 @@ def create_price_difference(train_df:DataFrame):
   train_df["price_hist_diff"] = price_df["price_hist_diff"]
   return train_df.drop(columns=["visitor_hist_adr_usd"])
 
-def create_ranked_variable(df:DataFrame, variable:str, ascending_bool=False):
+def create_ranked_feature(df:DataFrame, variable:str, ascending_bool=False):
+    """Creates a variable that represents the rank of the property relative to the search. 
+
+    Args:
+        df (DataFrame): dataframe that contains the variable as column
+        variable (str): variable to compute the relative rank for 
+        ascending_bool (bool, optional): ascending or not. Defaults to False.
+
+    Returns:
+        DataFrame: dataframe with the new feature
+    """
     df = df.join(df.groupby('srch_id')[[variable]].rank(ascending=ascending_bool).astype(int).add_suffix('_rank'))
     return df
     
