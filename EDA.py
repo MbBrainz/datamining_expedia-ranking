@@ -3,15 +3,16 @@ import pandas as pd
 import seaborn as sns 
 import numpy as np 
 import matplotlib.pyplot as plt
-
-from utils import drop_features_with_many_na, get_features_from_datetime 
+from sqlalchemy import column
+from xgboost import train
+from feature_engineering import drop_features_with_many_na, get_features_from_datetime
 
 # %%
 train_df = pd.read_csv("./data/training_set_VU_DM.csv")
 test_df = pd.read_csv("./data/test_set_VU_DM.csv")
 
 #%%
-train_df[train_df["srch_id"] < 500].to_csv("./data/small_test_set_VU_DM.csv")
+# train_df[train_df["srch_id"] < 500].to_csv("./data/small_test_set_VU_DM.csv")
 
 raw_df = pd.DataFrame(pd.concat([train_df, test_df]))
 # %%
@@ -42,7 +43,7 @@ heatmap = sns.heatmap(corr.round(3),cmap="BrBG", annot=True, mask=mask)
 non_numericals = [x for x in df.columns if ( x.endswith("bool") | x.endswith("id"))]
 # non_numericals = non_numericals + ["src_id",]
 # %%
-pair_df = df.drop(columns=non_numericals).drop(columns=drop_columns, errors='ignore')
+pair_df = df.drop(columns=non_numericals)#.drop(columns=drop_columns, errors='ignore')
 # %%
 # sns.pairplot(pair_df, hue="prop_starrating")
 pair_df.columns
@@ -53,12 +54,16 @@ user_country_df = user_country_df[["prop_country_id", "visitor_location_country_
 
 user_country_pivot_df = user_country_df.reset_index([0,1]).pivot("prop_country_id", "visitor_location_country_id", "count")
 # %%
-
+sns.set_style("ticks")
 x = "prop_country_id"
 y = "visitor_location_country_id"
-sns.scatterplot(data=user_country_df, x=x, y=y)
 # sns.histplot(data=user_country_df,x=x, y=y, bins=50, pthresh=.1, cmap="mako")
-sns.kdeplot(data=user_country_df, x=x, y=y, levels=5, color="b", linewidths=4)
+sns.kdeplot(data=user_country_df, x=x, y=y, fill=True, levels=20, palette="viridis")
+#sns.scatterplot(data=user_country_df, x=x, y=y, alpha=0.3,color=".2", marker="x")
+sns.despine(trim=True)
+plt.xlim(-20,250)
+plt.ylim(-20,250)
+# plt.savefig("figures/location_visitor_vs_property.pdf", bbox_inches="tight")
 # %%
 # See how many booked places have a significant difference in the price they're booked for compared to what price they show.
 # 
@@ -68,6 +73,9 @@ sns.kdeplot(data=user_country_df, x=x, y=y, levels=5, color="b", linewidths=4)
 # This may allow us to eliminate the gross_booking_usd 
 
 
+
+
+#%%
 # find correlation between booking float and usd  value
 booked_data = train_df[(train_df["booking_bool"] == True) & (train_df["price_usd"] > 1) & (train_df["price_usd"] < 1E7)]
 #%%
@@ -97,4 +105,3 @@ for col in tqdm.tqdm( dis_df.columns):
   plt.show()
 # plt.show()
 # %%
-sns.displot()

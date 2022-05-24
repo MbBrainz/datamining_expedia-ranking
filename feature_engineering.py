@@ -69,4 +69,64 @@ def comp_inv_and_cheaper_count(df: DataFrame):
     df.loc[inv_equal_zero_mask, "Competitor_Available_count"] += 1
     
   return df.drop(columns=comp_columns + comp_diff_columns + comp_inv_columns)
+
+def convert_price_to_log(df: DataFrame):
+    df_ = df.copy()
+    df_["log_price_usd"] = np.log(df_["price_usd"])
+    df_["log_price_usd"][df_["log_price_usd"] < 0] = -1
+    return df_.drop(columns="price_usd")
+    # TODO: LOG OF PRICE 
+
+def create_star_difference(train_df:DataFrame):
+  """Creates a feature from the difference between the visitor_hist_starring and the prop_starring. If the visitor_hist_staring is Nan, this difference is set to 0
+
+  Args:
+      train_df (DataFrame): _description_
+
+  Returns:
+      DataFrame: dataframe with the new 'star_hist_diff' feature and without the visitor_hist_staring
+  """ 
+  star_df = train_df[["visitor_hist_starrating", "prop_starrating"]]
+  not_has_hist_mask = star_df["visitor_hist_starrating"].isnull()
+  valid = star_df[~not_has_hist_mask]
+  star_df["star_hist_diff"] = 0
+  star_df.loc[~not_has_hist_mask, "star_hist_diff"] = np.abs(valid["visitor_hist_starrating"] - valid["prop_starrating"])
+  train_df["star_hist_diff"] = star_df["star_hist_diff"]
+  return train_df.drop(columns=["visitor_hist_starrating"])
+
+def create_price_difference(train_df:DataFrame):
+  """Creates a feature from the difference between the visitor_price_adr_hist and the price_usd. If the visitor_price_adr_hist is Nan, this difference is set to 0
+
+  Args:
+      train_df (DataFrame): _description_
+
+  Returns:
+      DataFrame: dataframe with the new 'price_hist_diff' feature and without the visitor_price_adr_hist
+  """ 
+  price_df = train_df[["visitor_hist_adr_usd", "price_usd"]]
+  not_has_hist_mask = price_df["visitor_hist_adr_usd"].isnull()
+  valid = price_df[~not_has_hist_mask]
+  price_df["price_hist_diff"] = 0
+  price_df.loc[~not_has_hist_mask, "price_hist_diff"] = np.abs(valid["visitor_hist_adr_usd"] - valid["price_usd"])
+  train_df["price_hist_diff"] = price_df["price_hist_diff"]
+  return train_df.drop(columns=["visitor_hist_adr_usd"])
+
+def create_ranked_feature(df:DataFrame, variable:str, ascending_bool=False):
+    """Creates a variable that represents the rank of the property relative to the search. 
+
+    Args:
+        df (DataFrame): dataframe that contains the variable as column
+        variable (str): variable to compute the relative rank for 
+        ascending_bool (bool, optional): ascending or not. Defaults to False.
+
+    Returns:
+        DataFrame: dataframe with the new feature
+    """
+    df = df.join(df.groupby('srch_id')[[variable]].rank(ascending=ascending_bool).astype(int).add_suffix('_rank'))
+    return df
     
+
+# TODO: do something with the 2nd prop rev score 
+# TODO: check hist price of user and price of that property id
+
+
