@@ -7,6 +7,7 @@ from operator import index
 from pickle import FALSE
 from tkinter import commondialog
 import pandas as pd 
+from pandas import DataFrame
 import seaborn as sns 
 import numpy as np 
 import matplotlib.pyplot as plt
@@ -14,33 +15,32 @@ from sklearn.feature_selection import RFE
 from sympy import comp
 from torch import isin
 
-from utils import drop_features_with_many_na, get_features_from_datetime, Comp_inv_and_Cheaper_count 
+from feature_engineering import prop_avg_score,drop_features_with_many_na, get_features_from_datetime, comp_inv_and_cheaper_count, convert_price_to_log, create_price_difference
 #%%
-#loading the smaller set to test
 
-#%%
-competitordf  = Load_csv("small_test_set_VU_DM.csv")
+#loading the smaller set to test
+competitordf = pd.read_csv("./data/small_test_set_VU_DM.csv")
 
 #%%
 competitordf.columns
 #%%
 
-def USD_history_add(df):
-
-  df["visitor_hist_adr_usd"] = df["visitor_hist_adr_usd"].fillna(value = 0)
-  df["hist_USD_diff"] = df["price_usd"] - df["visitor_hist_adr_usd"]
-
-  return df
-
 #%%
 
-newdf = USD_history_add(competitordf)
-newdf
-
-
-
+df = prop_avg_score(competitordf)
+df
 #%%
- comp_columns = [x for x in df.columns if str(x).startswith("comp")     & str(x).endswith("rate")]
+click_list = []
+
+for i, row in competitordf.iterrows():
+  if competitordf.at[i, "click_bool"] == 1:
+    print("yes this occurs in row {} ".format(i))
+    click_list.append(1)
+  if competitordf.at[i, "click_bool"] == 1
+
+np.sum(click_list)
+
+
 #%%
 
 book_and_propid = ["prop_id", "booking_bool", "click_bool"]
