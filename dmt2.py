@@ -16,13 +16,7 @@ from torch import isin
 
 from utils import drop_features_with_many_na, get_features_from_datetime, Comp_inv_and_Cheaper_count 
 #%%
-#loadinmg the smaller set to test with 
-
-def Load_csv(Name):
-
-  name_to_load = Name
-  df = pd.read_csv("./data/{}".format(Name))
-  return df
+#loading the smaller set to test
 
 #%%
 competitordf  = Load_csv("small_test_set_VU_DM.csv")
@@ -43,9 +37,11 @@ def USD_history_add(df):
 newdf = USD_history_add(competitordf)
 newdf
 
+
+
 #%%
-
-
+ comp_columns = [x for x in df.columns if str(x).startswith("comp")     & str(x).endswith("rate")]
+#%%
 
 book_and_propid = ["prop_id", "booking_bool", "click_bool"]
 
