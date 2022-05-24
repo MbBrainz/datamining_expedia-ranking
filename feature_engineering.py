@@ -136,6 +136,9 @@ def prop_avg_score(df:DataFrame):
 
   return df
 
+def properties_clicked_df(df:DataFrame):
+    clicked_df = df[(df['click_bool'] > 0)]
+    return clicked_df
 
 # TODO: do something with the 2nd prop rev score 
 # TODO: check hist price of user and price of that property id

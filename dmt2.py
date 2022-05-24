@@ -18,28 +18,64 @@ from torch import isin
 from feature_engineering import prop_avg_score,drop_features_with_many_na, get_features_from_datetime, comp_inv_and_cheaper_count, convert_price_to_log, create_price_difference
 #%%
 
-#loading the smaller set to test
-competitordf = pd.read_csv("./data/small_test_set_VU_DM.csv")
+#loading the larger set to test
+competitordf = pd.read_csv("./data/training_set_VU_DM.csv")
 
 #%%
-competitordf.columns
-#%%
+competitordf
 
 #%%
+clicked_not_booked_df = competitordf[ (competitordf['click_bool'] > 0) & (competitordf['booking_bool'] == 0)]
+clicked_not_booked_df
+#%%
+booked_df = competitordf[(competitordf['booking_bool'] > 0)]
+booked_df
 
-df = prop_avg_score(competitordf)
-df
+#%%
+#tester 
+clicked_df = competitordf[(competitordf['click_bool'] > 0)]
+clicked_df
+
 #%%
 click_list = []
+booking_list = []
+not_clicked = []
 
 for i, row in competitordf.iterrows():
   if competitordf.at[i, "click_bool"] == 1:
     print("yes this occurs in row {} ".format(i))
     click_list.append(1)
-  if competitordf.at[i, "click_bool"] == 1
+  elif competitordf.at[i, "click_bool"] == 0:
+    not_clicked.append(1)
 
-np.sum(click_list)
+  if competitordf.at[i, "booking_bool"] == 1:
+    booking_list.append(1)
 
+np.sum(not_clicked)
+
+#%%
+#Finding the properties which have never been clicked on.
+#removing these values 
+
+prop_id_grouped = competitordf.groupby(by ='prop_id').agg('mean').reset_index()
+x = prop_id_grouped[prop_id_grouped["click_bool"] == 0]
+#%%
+print((221879/4958347)*100)
+#%%
+clicked_df = competitordf[(competitordf['click_bool'] > 0)] & competitordf[(competitordf['booking_bool'] == 0)]
+
+#%%
+booked_df = competitordf[(competitordf['booking_bool'] > 0)]
+clicked_df
+#%%
+
+
+for i, row in competitordf.iterrows():
+  if competitordf.at[i, "click_bool"] == 1:
+    print("yes this occurs in row {} ".format(i))
+
+#%%
+x
 
 #%%
 
