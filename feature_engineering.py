@@ -126,6 +126,17 @@ def create_ranked_feature(df:DataFrame, variable:str, ascending_bool=False):
     return df
     
 
+def prop_avg_score(df:DataFrame):
+  #replce the 0 values with NaN for the sake of calculating the mean
+  df.prop_location_score1.replace(0, np.nan, inplace = True)
+  d = df.groupby('prop_id').prop_location_score1.agg('mean').reindex(df.prop_id).reset_index()
+  df["prop_location_score1_avg"] = d.prop_location_score1
+  #
+  df.prop_location_score1.replace(np.nan, 0, inplace = True) 
+
+  return df
+
+
 # TODO: do something with the 2nd prop rev score 
 # TODO: check hist price of user and price of that property id
 
