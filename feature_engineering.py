@@ -1,6 +1,9 @@
 from pandas import DataFrame, to_datetime
 import numpy as np
 from tqdm import tqdm
+from pandas.tseries.holiday import USFederalHolidayCalendar as calendar
+
+
 
 def drop_features_with_many_na(df: DataFrame, threshold=2E6):
     """drop all features with more then `threshold` na values
@@ -90,7 +93,7 @@ def create_star_difference(train_df:DataFrame):
   not_has_hist_mask = star_df["visitor_hist_starrating"].isnull()
   valid = star_df[~not_has_hist_mask]
   star_df["star_hist_diff"] = 0
-  star_df.loc[~not_has_hist_mask, "star_hist_diff"] = np.abs(valid["visitor_hist_starrating"] - valid["prop_starrating"])
+  star_df.loc[~not_has_hist_mask, "star_hist_diff"] = valid["visitor_hist_starrating"] - valid["prop_starrating"]
   train_df["star_hist_diff"] = star_df["star_hist_diff"]
   return train_df.drop(columns=["visitor_hist_starrating"])
 
@@ -107,7 +110,7 @@ def create_price_difference(train_df:DataFrame):
   not_has_hist_mask = price_df["visitor_hist_adr_usd"].isnull()
   valid = price_df[~not_has_hist_mask]
   price_df["price_hist_diff"] = 0
-  price_df.loc[~not_has_hist_mask, "price_hist_diff"] = np.abs(valid["visitor_hist_adr_usd"] - valid["price_usd"])
+  price_df.loc[~not_has_hist_mask, "price_hist_diff"] = valid["visitor_hist_adr_usd"] - valid["price_usd"]
   train_df["price_hist_diff"] = price_df["price_hist_diff"]
   return train_df.drop(columns=["visitor_hist_adr_usd"])
 
@@ -125,6 +128,11 @@ def create_ranked_feature(df:DataFrame, variable:str, ascending_bool=False):
     df = df.join(df.groupby('srch_id')[[variable]].rank(ascending=ascending_bool).astype(int).add_suffix('_rank'))
     return df
     
+def add_prop_count(df: DataFrame):
+    """counts the frequency of a specific property id and adds it to all the rows with the corresponding property ids"""
+    
+    prop_df = df[["prop_id", "srch_id"]].groupby(by=["prop_id"]).count().reset_index().rename(columns={"srch_id":"prop_count"})
+    return df.join(prop_df.set_index("prop_id"), on="prop_id")
 
 def prop_avg_score(df:DataFrame):
   #replce the 0 values with NaN for the sake of calculating the mean
@@ -143,4 +151,14 @@ def properties_clicked_df(df:DataFrame):
 # TODO: do something with the 2nd prop rev score 
 # TODO: check hist price of user and price of that property id
 
+def add_prop_feature_mean(df:DataFrame, features_to_mean=["promotion_flag", "prop_location_score2", "srch_query_affinity_score"]):
+    """adds means of features per prop id"""
+    
+    prop_promo_df = df[["prop_id"] + features_to_mean]\
+        .groupby(by=["prop_id"])\
+        .agg(["mean"]).reset_index()
+    prop_promo_df.columns = ['_'.join(col) for col in prop_promo_df.columns]
+    prop_promo_df.rename(columns={"prop_id_":"prop_id"}, inplace=True)
 
+    return df.join(prop_promo_df.set_index("prop_id"), on="prop_id")
+    

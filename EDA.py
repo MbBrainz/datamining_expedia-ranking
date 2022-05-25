@@ -19,7 +19,23 @@ raw_df = pd.DataFrame(pd.concat([train_df, test_df]))
 raw_df.head()
 raw_df.info()
 # %%
+from pandas.tseries.holiday import USFederalHolidayCalendar as calendar
 
+min_date = min(train_df.date_time)
+max_date = max(train_df.date_time)
+
+dr = pd.date_range(start=min_date, end=max_date)
+
+cal = calendar()
+holidays = cal.holidays(start=dr.min(), end=dr.max())
+
+
+# TODO Incement this value with booking_window !!!
+train_df['US_holiday'] = train_df['date_time'].isin(holidays)
+train_df.head()
+
+
+#%%
 display(raw_df.isnull().sum())
 df = drop_features_with_many_na(raw_df, 4E6)
 df.head()
