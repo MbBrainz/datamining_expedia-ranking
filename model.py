@@ -99,5 +99,5 @@ df["predict"] = model.predict(test_df.loc[:, ~test_df.columns.isin(["srch_id"])]
 sorted_df = df.sort_values(by=["srch_id", "predict"], ascending=[True,False])
 # %%
 # sorted_df[["srch_id", "prop_id"]].to_csv(f"predictions/VU-DM-2022-Group-155-pred-20-05-2-22-11-50.csv", index=False)
-sorted_df[["srch_id", "prop_id"]].to_csv(f"predictions/VU-DM-2022-Group-155-pred-{datenow}.csv", index=False)
+sorted_df[["srch_id", "prop_id"]].to_csv(f"predictions/VU-DM-2022-Group-155-v{VERSION}-pred-{datenow}.csv", index=False)
 # %%
