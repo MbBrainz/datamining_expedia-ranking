@@ -15,7 +15,7 @@ from sklearn.feature_selection import RFE
 from sympy import comp
 from torch import isin
 
-from feature_engineering import prop_avg_score,drop_features_with_many_na, get_features_from_datetime, comp_inv_and_cheaper_count, convert_price_to_log, create_price_difference
+from feature_engineering import prop_avg_score,drop_features_with_many_na, get_features_from_datetime, comp_inv_and_cheaper_count, convert_price_to_log, create_price_difference, create_ranked_feature, properties_clicked_df
 #%%
 
 #loading the larger set to test
@@ -23,6 +23,24 @@ competitordf = pd.read_csv("./data/training_set_VU_DM.csv")
 
 #%%
 competitordf
+
+#%%
+
+train_df = properties_clicked_df(competitordf)
+train_df
+
+#%%
+
+train_df = create_ranked_feature(train_df, "price_usd")
+train_df
+
+#%%
+train_df = create_ranked_feature(train_df, "prop_starrating")
+train_df
+#%%
+train_df = create_ranked_feature(train_df, "prop_location_score1")
+#%%
+train_df = create_ranked_feature(train_df, "prop_review_score")
 
 #%%
 clicked_not_booked_df = competitordf[ (competitordf['click_bool'] > 0) & (competitordf['booking_bool'] == 0)]
