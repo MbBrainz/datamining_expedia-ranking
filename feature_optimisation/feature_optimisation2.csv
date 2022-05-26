@@ -1,0 +1,45 @@
+score,column_deleted,column deleted
+0.3748261862141988,[],
+0.37320071772729047,,['visitor_location_country_id']
+0.3741032680371682,,['prop_country_id']
+0.37230975482840484,,['prop_starrating']
+0.37164828913993303,,['prop_review_score']
+0.37110669620715614,,['prop_brand_bool']
+0.3715200756740058,,['prop_location_score1']
+0.3657326372457543,,['prop_location_score2']
+0.36799124181705717,,['prop_log_historical_price']
+0.3698091623454306,,['promotion_flag']
+0.37533710594692044,,['srch_destination_id']
+0.3730582890840812,,"['srch_length_of_stay', 'srch_destination_id']"
+0.372227916841163,,"['srch_booking_window', 'srch_destination_id']"
+0.37398523870495315,,"['srch_adults_count', 'srch_destination_id']"
+0.37490922103867774,,"['srch_children_count', 'srch_destination_id']"
+0.3738744859700233,,"['srch_room_count', 'srch_destination_id']"
+0.3725911280201125,,"['srch_saturday_night_bool', 'srch_destination_id']"
+0.37260678659781105,,"['srch_query_affinity_score', 'srch_destination_id']"
+0.3730764867514965,,"['orig_destination_distance', 'srch_destination_id']"
+0.37211129891054284,,"['random_bool', 'srch_destination_id']"
+0.37320849927753935,,"['prop_count', 'srch_destination_id']"
+0.37082188573792124,,"['promotion_flag_mean', 'srch_destination_id']"
+0.37069440191475894,,"['prop_location_score2_mean', 'srch_destination_id']"
+0.37375742827399544,,"['srch_query_affinity_score_mean', 'srch_destination_id']"
+0.3738496151621933,,"['srch_room_count_mean', 'srch_destination_id']"
+0.3737332095918005,,"['srch_children_count_mean', 'srch_destination_id']"
+0.3729904253792664,,"['srch_adults_count_mean', 'srch_destination_id']"
+0.37344433378878245,,"['srch_length_of_stay_mean', 'srch_destination_id']"
+0.3725438316736353,,"['price_usd_rank', 'srch_destination_id']"
+0.37516286940603966,,"['prop_starrating_rank', 'srch_destination_id']"
+0.3735051830369424,,"['prop_review_score_rank', 'srch_destination_id']"
+0.3728181741023375,,"['prop_location_score1_rank', 'srch_destination_id']"
+0.37332875391151804,,"['prop_location_score2_rank', 'srch_destination_id']"
+0.374437393472153,,"['Competitor_Available_count', 'srch_destination_id']"
+0.37473990631455606,,"['Competitor_Cheaper_count', 'srch_destination_id']"
+0.37464179484094257,,"['price_hist_diff', 'srch_destination_id']"
+0.37453324559215595,,"['star_hist_diff', 'srch_destination_id']"
+0.36708788628099437,,"['log_price_usd', 'srch_destination_id']"
+0.3747512107230848,,"['hour_sin', 'srch_destination_id']"
+0.37192607619837503,,"['hour_cos', 'srch_destination_id']"
+0.3732083581327242,,"['day_sin', 'srch_destination_id']"
+0.37205487442029767,,"['day_cos', 'srch_destination_id']"
+0.37279860356548994,,"['month_sin', 'srch_destination_id']"
+0.37351770914532667,,"['month_cos', 'srch_destination_id']"

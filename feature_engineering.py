@@ -177,4 +177,55 @@ def add_prop_feature_mean(df:DataFrame, features_to_mean=["promotion_flag", "pro
     prop_promo_df.rename(columns={"prop_id_":"prop_id"}, inplace=True)
 
     return df.join(prop_promo_df.set_index("prop_id"), on="prop_id")
+
+
+def get_estimated_position_random_bol(df_with_position, df, train = True):
     
+    """
+    df_with_position: dataframe with training set to create estimated position
+    df: dataframe with either training or test set
+    train: Bool to adapt for only training set
+    
+    """
+    
+    estimated_position_random_1 = df_with_position.loc[df_train["random_bool"] == 1]
+    estimated_position_random_0 = df_with_position.loc[df_train["random_bool"] == 0]
+    
+    
+    estimated_position_random_1 = estimated_position_random_1.groupby(["srch_destination_id", "prop_id"]).agg({"position": "mean"})
+
+    estimated_position_random_1 = estimated_position_random_1.rename(index=str, columns={"position": "estimated_position"}).reset_index()
+
+    estimated_position_random_1["srch_destination_id"] = (estimated_position_random_1["srch_destination_id"].astype(str).astype(int))
+
+    estimated_position_random_1["prop_id"] = (estimated_position_random_1["prop_id"].astype(str).astype(int))
+
+    # estimated_position_random_1["estimated_position"] = (1 / estimated_position_random_1["estimated_position"])
+
+    estimated_position_random_1["random_bool"] = 1
+    
+    
+    estimated_position_random_0 = estimated_position_random_0.groupby(["srch_destination_id", "prop_id"]).agg({"position": "mean"})
+
+    estimated_position_random_0 = estimated_position_random_0.rename(index=str, columns={"position": "estimated_position"}).reset_index()
+
+    estimated_position_random_0["srch_destination_id"] = (estimated_position_random_0["srch_destination_id"].astype(str).astype(int))
+
+    estimated_position_random_0["prop_id"] = (estimated_position_random_0["prop_id"].astype(str).astype(int))
+
+    # estimated_position_random_0["estimated_position"] = (1 / estimated_position_random_0["estimated_position"])
+
+    estimated_position_random_0["random_bool"] = 0
+    
+    
+    estimated_position = pd.concat([estimated_position_random_1, estimated_position_random_0])
+    
+    df = df.merge(estimated_position, how="left", on=["srch_destination_id", "prop_id", "random_bool"])
+    
+    
+    if train:
+        print("Correlation between 'position' and 'estimated_position' :", df["position"].corr(df["estimated_position"]))
+        
+        df = df.drop('position', axis=1)
+    
+    return df

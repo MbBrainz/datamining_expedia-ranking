@@ -10,7 +10,10 @@ from evaluate import evaluate_score
 
 from utils import split_train_data, split_train_data_nsplits
 #%%
-train_df = pd.read_csv("./data/processed_training_set_Vu_DM-v6.csv", index_col=0, nrows=3E5)
+VERSION = 13
+datafile = f"processed_training_set_Vu_DM-v{VERSION}.csv"
+
+train_df = pd.read_csv(f"./data/{datafile}", index_col=0, nrows=3E5)
 
 import optuna
 X_train, y_train, X_val, y_val , groups_train, groups_val, test_data= split_train_data(train_df, testsize=0.2)
@@ -18,23 +21,22 @@ X_train, y_train, X_val, y_val , groups_train, groups_val, test_data= split_trai
 def objective(trial: optuna.Trial):
     
     ### These parameters have been tuned, see v6 PDF's
-    # subsample = trial.suggest_float("subsample", 0.6, 0.9)
     subsample = 0.8 # best performing
-    # max_depth = trial.suggest_int("max_depth", 3, 6)
-    max_depth = 5 # 5 is consistantly the best 
+    subsample = trial.suggest_float("subsample", 0.6, 0.9)
+    # max_depth = trial.suggest_int("max_depth", 3, 7)
+    max_depth = 4 # 4 is consistantly the best 
     # learning_rate = trial.suggest_float('learning_rate', 0.1, 0.15)
-    learning_rate = 0.125 # best performing 
-    
-    # TODO run again with right parameter space and rank_objective
+    learning_rate = 0.115 # best performing 
     
     ### The optuna parameter search will be performed on the following h. parameters:
-    eta = trial.suggest_float("eta", 0.01, 0.05)
-    gamma = trial.suggest_float("gamma", 0.0, 4.0)
+    eta = 0.032
+    eta = trial.suggest_float("eta", 0.0, 0.05)
+    gamma = trial.suggest_float("gamma", 1.0, 3.0)
     n_estimators = trial.suggest_int('n_estimators', 250, 350)
     
     ### This parameter might still be promising
-    rank_objective = "rank:pairwise" # TODO
-    # rank_objective = trial.suggest_categorical("objective", ["rank:pairwise", "rank:ndcg", "ndcg:map"])
+    # rank_objective = trial.suggest_categorical("objective", ["rank:pairwise", "rank:ndcg"])
+    rank_objective = "rank:pairwise" # waaaaay better then ncdg
     
     model = XGBRanker(  
         # tree_method='gpu_hist',
@@ -92,3 +94,4 @@ optuna.visualization.plot_contour(study)
 
 # %%
 optuna.visualization.plot_slice(study)
+#%%

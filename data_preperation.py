@@ -83,11 +83,12 @@ def add_features(data_df: pd.DataFrame):
 
     data_df = create_star_difference(data_df)
     
-
-    
     data_df = convert_price_to_log(data_df)
 
     data_df = get_features_from_datetime(data_df)
+    
+    #this one is for version 14 based on test_features.py results that can be found in .feature_optimisation/
+    # data_df.drop(columns=["srch_destination_id"], inplace=True)
     
     added_features =  set(data_df.columns) -  set(initial_features)
     
