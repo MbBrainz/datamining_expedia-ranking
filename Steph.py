@@ -13,7 +13,7 @@ from utils import split_train_data, user_choose_model_to_load, user_choose_train
 
 
 #%%
-datafile = "processed_training_set_Vu_DM-v10.csv"
+datafile = "processed_training_set_Vu_DM-v12.csv"
 train_df = pd.read_csv(f"./data/{datafile}", index_col=0)
 
 #%%
@@ -71,6 +71,14 @@ shap.summary_plot(shap_values, X_test_sampled)
 
 #%%
 y_val_predict = model.predict(X_val)
+X_val_res = X_val.loc[:, ["srch_id", "prop_id"]]
+
+X_val_res['predict'] = y_val_predict
+X_val_res['scores'] = y_val['scores'].values
+
+ndcg_df = X_val_res[['srch_id', 'predict', 'scores']]
+val_ndcg = evaluate.evaluate_score(ndcg_df)
+print("validation_ndcg: ", val_ndcg)
 
 
 #%%

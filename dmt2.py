@@ -19,40 +19,65 @@ from feature_engineering import prop_avg_score,drop_features_with_many_na, get_f
 #%%
 
 #loading the larger set to test
-competitordf = pd.read_csv("./data/training_set_VU_DM.csv")
-
-#%%
-competitordf
+compedf = pd.read_csv("./data/training_set_VU_DM.csv")
 
 #%%
 
-train_df = properties_clicked_df(competitordf)
-train_df
+
+comp_columns = [x for x in compedf.columns if str(x).startswith("comp")     & str(x).endswith("rate")]
+comp_diff_columns = [x for x in compedf.columns if str(x).startswith("comp")& str(x).endswith("rate_percent_diff")]
+comp_inv_columns = [x for x in compedf.columns if str(x).startswith("comp") & str(x).endswith("inv")]
+
+cordf = compedf.drop(columns=comp_columns + comp_diff_columns + comp_inv_columns)
+cordf
+#%%
+
+cor_matrix = cordf.corr()
+#%%
+corabove = cor_matrix[ cor_matrix > 0.25]
 
 #%%
 
-train_df = create_ranked_feature(train_df, "price_usd")
-train_df
+to_drop = [column for column in upper_tri.columns if any(upper_tri[column] > 0.95)]
+print()
+print(to_drop)
+#%%
+#%%
+sns.set(rc = {'figure.figsize':(15,10)})
+corrplot = sns.heatmap(corabove, vmin = 0, vmax = 1)
+
+corrplot.set_xticklabels(corrplot.get_xmajorticklabels(), fontsize = 15)
+corrplot.set_yticklabels(corrplot.get_ymajorticklabels(), fontsize = 15)
+plt.title("Heatmap of correlations", fontsize = 16)
+plt.savefig("figures/original_corr.pdf", bbox_inches="tight")
+
 
 #%%
-train_df = create_ranked_feature(train_df, "prop_starrating")
-train_df
-#%%
-train_df = create_ranked_feature(train_df, "prop_location_score1")
-#%%
-train_df = create_ranked_feature(train_df, "prop_review_score")
+noclick = compedf[compedf["click_bool"] == 0]
 
 #%%
-clicked_not_booked_df = competitordf[ (competitordf['click_bool'] > 0) & (competitordf['booking_bool'] == 0)]
-clicked_not_booked_df
-#%%
-booked_df = competitordf[(competitordf['booking_bool'] > 0)]
-booked_df
+pl = noclick.groupby(by  = "prop_id").agg("count").reset_index()
+pl
 
 #%%
-#tester 
-clicked_df = competitordf[(competitordf['click_bool'] > 0)]
-clicked_df
+sns.barplot(data = pl, x = "prop_id", y = "click_bool")
+#%%
+compedf.groupby(by = compedf[compedf["click_bool"] == 0])
+#%%
+compedf.groupby(by = [compedf[compedf["click_bool"] == 0]]).agg("count").reset_index()
+#%%
+def downsample(df, k=1):
+    """
+    k determines how many negative points you want (click_bool = 0) for each positive point. Default is 1. 
+    """
+    df_majority = df[df.click_bool == 0]
+    df_minority = df[df.click_bool == 1]
+    
+    sampled = df_majority.groupby("srch_id").sample(k) 
+    
+    df_downsampled = pd.concat([sampled, df_minority])
+    df_downsampled.sort_values(by=['srch_id'], inplace=True)
+    return df_downsampled
 
 #%%
 click_list = []
@@ -75,7 +100,15 @@ np.sum(not_clicked)
 #Finding the properties which have never been clicked on.
 #removing these values 
 
-prop_id_grouped = competitordf.groupby(by ='prop_id').agg('mean').reset_index()
+prop_id_grouped = compedf.groupby(by ='prop_id').agg('mean').reset_index()
+
+
+#%%
+
+prop_id_grouped
+#%%
+
+
 x = prop_id_grouped[prop_id_grouped["click_bool"] == 0]
 #%%
 print((221879/4958347)*100)
@@ -91,9 +124,6 @@ clicked_df
 for i, row in competitordf.iterrows():
   if competitordf.at[i, "click_bool"] == 1:
     print("yes this occurs in row {} ".format(i))
-
-#%%
-x
 
 #%%
 
@@ -166,41 +196,45 @@ compdf.head()
 newdf =  Comp_inv_and_Cheaper_count(competitordf)
 
 #%%
-newdf
-#%%
-#Determining the humber of Null values 
-null_vals = compdf.isnull().sum()
 
-null_vals.tolist()
-null_vals
-
-#%%
-cols = compdf.columns.tolist()
-cols
-
-#%%
-null_vals1 = pd.DataFrame(compdf.isnull().sum()).reset_index()
+null_vals1 = pd.DataFrame(compedf.isnull().sum()).reset_index()
 null_vals1["values"] = null_vals1[0]
 null_vals1.drop( columns = 0, inplace= True)
-sns.barplot(data = null_vals1, x = "index", y = "values")
+#%%
+null_plot = null_vals1[(null_vals1['values'] > 0)]
+
+null_plot["Percentage"] = null_plot["values"]/compedf.shape[0]
+null_plot
+#%%
+null_sorted = null_plot.sort_values(["values","Percentage"])
+null_sorted
+#%%
+#plotting the humber of Null values 
+#%%
+
+sns.set(rc = {'figure.figsize':(10,6)})
+sns.barplot(data = null_sorted, x = "values", y = "index")
 sns.despine(offset=10, trim=True)
-plt.title("number of NaN values present for features", fontsize = 16)
-plt.xlabel("Feature", fontsize = 14)
-plt.ylabel("Number of NaN values oresent in dataset", fontsize = 14)
-plt.xticks(rotation=85)
+plt.title("number of NaN values present for features", fontsize = 18)
+plt.xlabel("Number of NaN values oresent in dataset", fontsize = 16)
+plt.ylabel("feature", fontsize = 16)
+plt.xticks(fontsize = 16)
+plt.yticks(fontsize = 12)
+plt.rcParams['figure.dpi'] = 300
 
 #%%
 #plotting as a percentage
-null_vals1["Percentage"] = null_vals1["values"]/6973
-null_sorted = null_vals1.sort_values('Percentage')
-
 #%%
+sns.set(rc = {'figure.figsize':(10,5)})
 sns.barplot(data = null_sorted, x = "Percentage", y = "index", palette=("Blues_d"))
 sns.despine(offset=10, trim=True)
 plt.title("number of NaN values present for features", fontsize = 16)
-plt.xlabel("Percentage of NaN values to total columns", fontsize = 14)
+plt.xlabel("Percentage of NaN values to total columns", fontsize = 16)
 plt.ylabel("Feature", fontsize = 14)
-plt.xticks(rotation=85)
+plt.xticks(fontsize = 10)
+plt.yticks(fontsize = 11)
+plt.rcParams['figure.dpi'] = 600
+
 
 
 #%%
@@ -278,6 +312,11 @@ print("new Section regarding aggregation")
 #     df.drop(i, axis = 1, inplace = True)
 
 #   return df
+
+#%%
+
+ax = sns.boxplot(data=compedf, x = "date_time", y = "booking_bool", showfliers = True )
+
 
 #%%
 #identifying outliers and extreme values which may influence training and model accuracy 
