@@ -11,7 +11,7 @@ import evaluate
 from utils import split_train_data, user_choose_model_to_load, user_choose_train_or_load
 
 #%%
-VERSION = 10
+VERSION = 13
 datafile = f"processed_training_set_Vu_DM-v{VERSION}.csv"
 
 train_df = pd.read_csv(f"./data/{datafile}", index_col=0)
@@ -32,19 +32,21 @@ if  user_choise == 1:
     # docs can be found here https://xgboost.readthedocs.io/en/stable/python/python_api.html#xgboost.XGBRanker 
     model = xgb.XGBRanker(  
         tree_method=DEVICE,
-        booster='gbtree',
+        booster='dart',
         objective='rank:pairwise',
         random_state=42, 
         learning_rate=0.11,
         colsample_bytree=0.9, 
         eta=0.032, 
-        gamma=2,
+        gamma=1.5,
         max_depth=5, 
-        n_estimators=300, 
+        max_leaves=255,
+        n_estimators=320, 
         subsample=0.8,
+        eval_metric="ndcg@5"
         )
 
-    model.fit(X_train, y_train, group=groups_train, verbose=True)
+    model.fit(X_train.loc[:, ~X_train.columns.isin(['prop_id'])], y_train, group=groups_train, verbose=True)
     # for i in range(3):
     #     model.fit(X_train, y_train, group=groups_train, verbose=True, xgb_model=model)
     #     validate(X_val, y_val, model)
@@ -72,7 +74,7 @@ elif user_choise == 3:
 # predicting on validation set
 
 def validate(X_val, y_val, model:xgb.XGBRanker):
-    y_val_predict = model.predict(X_val)
+    y_val_predict = model.predict(X_val.loc[:,~X_train.columns.isin(['prop_id'])])
     X_val_res = X_val.loc[:, ["srch_id", "prop_id"]]
 
     X_val_res['predict'] = y_val_predict
@@ -99,5 +101,5 @@ df["predict"] = model.predict(test_df.loc[:, ~test_df.columns.isin(["srch_id"])]
 sorted_df = df.sort_values(by=["srch_id", "predict"], ascending=[True,False])
 # %%
 # sorted_df[["srch_id", "prop_id"]].to_csv(f"predictions/VU-DM-2022-Group-155-pred-20-05-2-22-11-50.csv", index=False)
-sorted_df[["srch_id", "prop_id"]].to_csv(f"predictions/VU-DM-2022-Group-155-pred-{datenow}.csv", index=False)
+sorted_df[["srch_id", "prop_id"]].to_csv(f"predictions/VU-DM-2022-Group-155-v{VERSION}-pred-{datenow}.csv", index=False)
 # %%

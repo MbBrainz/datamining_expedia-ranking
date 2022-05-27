@@ -3,7 +3,10 @@ import numpy as np
 from tqdm import tqdm
 from pandas.tseries.holiday import USFederalHolidayCalendar as calendar
 
-
+def remove_empty_searches(df: DataFrame):
+    """ An Empty search is consider specific search id that has zero rows(properties/hotels) that are clicked or booked"""
+    
+    #TODO
 
 def drop_features_with_many_na(df: DataFrame, threshold=2E6):
     """drop all features with more then `threshold` na values
@@ -43,8 +46,18 @@ def get_features_from_datetime(df: DataFrame) -> DataFrame:
     df['month'] = df.date_time.dt.month 
     df['day']   = df.date_time.dt.day
     df['hour']  = df.date_time.dt.hour
+    
+    #convert to cyclic values (each a sin and each a cosine)
+    df = convert_time_cyclic(df,"hour", 24)
+    df = convert_time_cyclic(df,"day", 31)
+    df = convert_time_cyclic(df,"month", 12)
     # df['minute']= df.date_time.dt.minute
     return df.drop(columns="date_time")
+
+def convert_time_cyclic(df: DataFrame, time_var='hour', max=24) -> DataFrame:
+    df[f'{time_var}_sin'] = np.sin(df[f'{time_var}'] / (max-1) * 2 * np.pi)
+    df[f'{time_var}_cos'] = np.cos(df[f'{time_var}'] / (max-1) * 2 * np.pi)
+    return df.drop(columns=[time_var])
 
 
 def comp_inv_and_cheaper_count(df: DataFrame):
@@ -73,11 +86,14 @@ def comp_inv_and_cheaper_count(df: DataFrame):
     
   return df.drop(columns=comp_columns + comp_diff_columns + comp_inv_columns)
 
-def convert_price_to_log(df: DataFrame):
+def convert_price_to_log(df: DataFrame, drop_original=True):
     df_ = df.copy()
     df_["log_price_usd"] = np.log(df_["price_usd"])
     df_["log_price_usd"][df_["log_price_usd"] < 0] = -1
-    return df_.drop(columns="price_usd")
+    if drop_original:
+        return df_.drop(columns="price_usd")
+    else:
+        return df_
     # TODO: LOG OF PRICE 
 
 def create_star_difference(train_df:DataFrame):
@@ -161,4 +177,55 @@ def add_prop_feature_mean(df:DataFrame, features_to_mean=["promotion_flag", "pro
     prop_promo_df.rename(columns={"prop_id_":"prop_id"}, inplace=True)
 
     return df.join(prop_promo_df.set_index("prop_id"), on="prop_id")
+
+
+def get_estimated_position_random_bol(df_with_position, df, train = True):
     
+    """
+    df_with_position: dataframe with training set to create estimated position
+    df: dataframe with either training or test set
+    train: Bool to adapt for only training set
+    
+    """
+    
+    estimated_position_random_1 = df_with_position.loc[df_train["random_bool"] == 1]
+    estimated_position_random_0 = df_with_position.loc[df_train["random_bool"] == 0]
+    
+    
+    estimated_position_random_1 = estimated_position_random_1.groupby(["srch_destination_id", "prop_id"]).agg({"position": "mean"})
+
+    estimated_position_random_1 = estimated_position_random_1.rename(index=str, columns={"position": "estimated_position"}).reset_index()
+
+    estimated_position_random_1["srch_destination_id"] = (estimated_position_random_1["srch_destination_id"].astype(str).astype(int))
+
+    estimated_position_random_1["prop_id"] = (estimated_position_random_1["prop_id"].astype(str).astype(int))
+
+    # estimated_position_random_1["estimated_position"] = (1 / estimated_position_random_1["estimated_position"])
+
+    estimated_position_random_1["random_bool"] = 1
+    
+    
+    estimated_position_random_0 = estimated_position_random_0.groupby(["srch_destination_id", "prop_id"]).agg({"position": "mean"})
+
+    estimated_position_random_0 = estimated_position_random_0.rename(index=str, columns={"position": "estimated_position"}).reset_index()
+
+    estimated_position_random_0["srch_destination_id"] = (estimated_position_random_0["srch_destination_id"].astype(str).astype(int))
+
+    estimated_position_random_0["prop_id"] = (estimated_position_random_0["prop_id"].astype(str).astype(int))
+
+    # estimated_position_random_0["estimated_position"] = (1 / estimated_position_random_0["estimated_position"])
+
+    estimated_position_random_0["random_bool"] = 0
+    
+    
+    estimated_position = pd.concat([estimated_position_random_1, estimated_position_random_0])
+    
+    df = df.merge(estimated_position, how="left", on=["srch_destination_id", "prop_id", "random_bool"])
+    
+    
+    if train:
+        print("Correlation between 'position' and 'estimated_position' :", df["position"].corr(df["estimated_position"]))
+        
+        df = df.drop('position', axis=1)
+    
+    return df
